@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-graph-redis
+  namespace: social-network
+  labels:
+    app: social-graph-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: social-graph-redis
+  template:
+    metadata:
+      labels:
+        app: social-graph-redis
+    spec:
+      initContainers:
+        - name: wait-for-jaeger-agent
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-agent 6831; do echo waiting for Jaeger Agent; sleep 5; done;"]
+
+        - name: wait-for-jaeger-query
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-query 16686; do echo waiting for Jaeger Query; sleep 5; done;"]
+
+      containers:
+        - name: redis
+          image: redis
+          command: ["redis-server", "/social-network-microservices/config/redis.conf"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: keys-volume
+              mountPath: /keys
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      volumes:
+        - name: config-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/config
+
+        - name: keys-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: social-graph-redis
+  namespace: social-network
+spec:
+  selector:
+    app: social-graph-redis
+  ports:
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP

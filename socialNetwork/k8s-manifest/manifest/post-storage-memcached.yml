@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-storage-memcached
+  namespace: social-network
+  labels:
+    app: post-storage-memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: post-storage-memcached
+  template:
+    metadata:
+      labels:
+        app: post-storage-memcached
+    spec:
+
+      initContainers:
+        - name: wait-for-jaeger-agent
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-agent 6831; do echo waiting for Jaeger Agent; sleep 5; done;"]
+
+        - name: wait-for-jaeger-query
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-query 16686; do echo waiting for Jaeger Query; sleep 5; done;"]
+
+      containers:
+        - name: memcached
+          image: memcached
+          args:
+            - "-m"
+            - "16384"
+            - "-t"
+            - "8"
+            - "-I"
+            - "32m"
+            - "-c"
+            - "4096"
+          ports:
+            - containerPort: 11211
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: post-storage-memcached
+  namespace: social-network
+spec:
+  selector:
+    app: post-storage-memcached
+  ports:
+    - name: memcached
+      protocol: TCP
+      port: 11211
+      targetPort: 11211
+  type: ClusterIP

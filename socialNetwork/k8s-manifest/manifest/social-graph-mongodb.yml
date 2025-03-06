@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-graph-mongodb
+  namespace: social-network
+  labels:
+    app: social-graph-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: social-graph-mongodb
+  template:
+    metadata:
+      labels:
+        app: social-graph-mongodb
+    spec:
+      initContainers:
+        - name: wait-for-jaeger-agent
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-agent 6831; do echo waiting for Jaeger Agent; sleep 5; done;"]
+
+        - name: wait-for-jaeger-query
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-query 16686; do echo waiting for Jaeger Query; sleep 5; done;"]
+
+      containers:
+        - name: mongodb
+          image: mongo:4.4.6
+          command: ["mongod", "--nojournal", "--quiet", "--config", "/social-network-microservices/config/mongod.conf"]
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: keys-volume
+              mountPath: /keys
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+
+      volumes:
+        - name: config-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/config
+
+        - name: keys-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: social-graph-mongodb
+  namespace: social-network
+spec:
+  selector:
+    app: social-graph-mongodb
+  ports:
+    - name: mongodb
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP

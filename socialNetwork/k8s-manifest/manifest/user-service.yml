@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: social-network
+  labels:
+    app: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      initContainers:
+        - name: wait-for-user-mongodb
+          image: busybox
+          command: ["sh", "-c", "until nc -z user-mongodb 27017; do echo waiting for User MongoDB; sleep 5; done;"]
+
+        - name: wait-for-jaeger-agent
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-agent 6831; do echo waiting for Jaeger Agent; sleep 5; done;"]
+
+        - name: wait-for-jaeger-query
+          image: busybox
+          command: ["sh", "-c", "until nc -z jaeger-query 16686; do echo waiting for Jaeger Query; sleep 5; done;"]
+
+      containers:
+        - name: user-service
+          image: 127.0.0.1:5000/social-network-microservices:withLog_01
+          command: ["UserService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: keys-volume
+              mountPath: /keys
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      volumes:
+        - name: config-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/config
+
+        - name: keys-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: social-network
+spec:
+  selector:
+    app: user-service
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

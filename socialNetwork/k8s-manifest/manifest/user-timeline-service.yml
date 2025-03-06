@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-timeline-service
+  namespace: social-network
+  labels:
+    app: user-timeline-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-timeline-service
+  template:
+    metadata:
+      labels:
+        app: user-timeline-service
+    spec:
+      containers:
+        - name: user-timeline-service
+          image: 127.0.0.1:5000/social-network-microservices:withLog_01
+          command: ["UserTimelineService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      volumes:
+        - name: config-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-timeline-service
+  namespace: social-network
+spec:
+  selector:
+    app: user-timeline-service
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
