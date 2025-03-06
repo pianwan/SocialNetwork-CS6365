@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-config
+  namespace: social-network
+data:
+  jaeger-config.yml: |
+    disabled: false
+    reporter:
+      logSpans: false
+      localAgentHostPort: "jaeger-agent:6831"
+      queueSize: 1000000
+      bufferFlushInterval: 10
+    sampler:
+      type: "probabilistic"
+      param: 0.1

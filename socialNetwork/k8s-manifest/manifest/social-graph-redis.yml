@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-graph-redis
+  namespace: social-network
+  labels:
+    app: social-graph-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: social-graph-redis
+  template:
+    metadata:
+      labels:
+        app: social-graph-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis
+          command:
+            - "redis-server"
+            - "/tmp/redis.conf"
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - mountPath: /tmp
+              name: redis-config-volume
+            - mountPath: /keys
+              name: tls-volume
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: tls-volume
+          secret:
+            secretName: tls
+        - name: redis-config-volume
+          configMap:
+            name: redis-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: social-graph-redis
+  namespace: social-network
+spec:
+  selector:
+    app: social-graph-redis
+  ports:
+    - name: redis
+      protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP

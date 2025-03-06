@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: social-network
+data:
+  redis.conf: |
+    port 6379
+    tls-port 0
+    tls-cert-file /keys/server.crt
+    tls-key-file /keys/server.key
+    tls-auth-clients no
