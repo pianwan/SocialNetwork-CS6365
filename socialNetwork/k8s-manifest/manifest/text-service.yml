@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-service
+  namespace: social-network
+  labels:
+    app: text-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: text-service
+  template:
+    metadata:
+      labels:
+        app: text-service
+    spec:
+      containers:
+        - name: text-service
+          image: social-network-microservices:withLog_01
+          command: ["TextService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: keys-volume
+              mountPath: /keys
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      volumes:
+        - name: config-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/config
+
+        - name: keys-volume
+          hostPath:
+            path: /users/pianwan/DeathStarBench/socialNetwork/keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-service
+  namespace: social-network
+spec:
+  selector:
+    app: text-service
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
