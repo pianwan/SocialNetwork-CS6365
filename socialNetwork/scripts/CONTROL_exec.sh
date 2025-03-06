@@ -4,7 +4,7 @@ ssh node-0 "
   mkdir -p $RUBBOS_RESULTS_DIR_BASE
 "
 
-ssh benchmark "
+ssh -o StrictHostKeyChecking=no benchmark "
   source $HOME/rubbos/set_elba_env.sh
   mkdir -p $TMP_RESULTS_DIR_BASE/$RUBBOS_RESULTS_DIR_NAME
   rm -rf $TMP_RESULTS_DIR_BASE/$RUBBOS_RESULTS_DIR_NAME/*
@@ -14,12 +14,12 @@ ssh benchmark "
 for i in "rubbos.properties"
 do
 
-  ssh benchmark "
+  ssh -o StrictHostKeyChecking=no benchmark "
     source $HOME/rubbos/set_elba_env.sh
     rm -f $RUBBOS_HOME/Client/rubbos.properties
   "
 
-  scp $WORK_HOME/runtime_files/$i benchmark:$RUBBOS_HOME/Client/rubbos.properties
+  scp -o StrictHostKeyChecking=no $WORK_HOME/runtime_files/$i benchmark:$RUBBOS_HOME/Client/rubbos.properties
 
   # get HTTP request latency
   # ssh node-6 "rm -f $HOME/node6_sysdig.log; sudo sysdig -c httplog > $HOME/node6_sysdig.log &" &
@@ -40,8 +40,8 @@ do
     date
     rm Experiments_timestamp.log
 
-    ssh node-0 "$WORK_HOME/scripts/emptyLogs.sh"
-    ssh node-0 "$WORK_HOME/scripts/collectlMonitor.sh"
+    ssh -o StrictHostKeyChecking=no node-0 "$WORK_HOME/scripts/emptyLogs.sh"
+    ssh -o StrictHostKeyChecking=no node-0 "$WORK_HOME/scripts/collectlMonitor.sh"
 
 
     sleep 10
@@ -53,17 +53,17 @@ do
     mv Experiments_timestamp.log 20*/
     cd 20*
 
-    ssh node-0 "$WORK_HOME/scripts/endCollectl.sh"
-    # ssh node-0 "$WORK_HOME/scripts/endSysdig.sh"
-    ssh node-0 "$WORK_HOME/scripts/getLogs.sh"
-    scp -r node-0:/tmp/*.raw.gz ./
-    scp -r node-0:/tmp/log* ./
-    scp -r node-0:/tmp/node*.log ./
+    ssh -o StrictHostKeyChecking=no node-0 "$WORK_HOME/scripts/endCollectl.sh"
+    # ssh -o StrictHostKeyChecking=no node-0 "$WORK_HOME/scripts/endSysdig.sh"
+    ssh -o StrictHostKeyChecking=no node-0 "$WORK_HOME/scripts/getLogs.sh"
+    scp -o StrictHostKeyChecking=no -r node-0:/tmp/*.raw.gz ./
+    scp -o StrictHostKeyChecking=no -r node-0:/tmp/log* ./
+    scp -o StrictHostKeyChecking=no -r node-0:/tmp/node*.log ./
     cp $RUBBOS_HOME/bench/20*/index.html ./
     cp $RUBBOS_HOME/bench/20*/result*.jtl ./
 
     # scp node-6:$HOME/node6_sysdig.log ./
-    scp node-0:$WORK_HOME/set_elba_env.sh ./
+    scp -o StrictHostKeyChecking=no node-0:$WORK_HOME/set_elba_env.sh ./
 
 
     sleep 2

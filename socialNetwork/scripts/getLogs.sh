@@ -2,17 +2,15 @@
 
 echo -e "\e[33mGet logs of each container\e[0m"
 
-for i in "node-0" "node-1" "node-2" "node-3" "node-4" "node-5"
-do
-	#i=$(echo $i|cut -f2 -d"=")
-	#echo $i
-	ssh $i '
-	hostname
-	for j in $(sudo docker ps --format '{{.ID}}')
-	do
-		k=$(sudo docker inspect --format='{{.Config.Hostname}}' $j)
-		sudo docker logs $j >& /tmp/log_$k.log
-		scp /tmp/log_$k.log node-0:/tmp/
-	done
-	'
+NAMESPACE="social-network"
+LOCAL_TMP_DIR="/tmp/"
+
+pods=$(kubectl get pods -n $NAMESPACE -o jsonpath='{.items[*].metadata.name}')
+
+for pod in $pods; do
+  containers=$(kubectl get pod $pod -n $NAMESPACE -o jsonpath='{.spec.containers[*].name}')
+  for container in $containers; do
+    echo "Fetching logs from pod=$pod, container=$container"
+    kubectl logs -n $NAMESPACE $pod -c $container > "$LOCAL_TMP_DIR/log_${container}.log" 2>&1
+  done
 done

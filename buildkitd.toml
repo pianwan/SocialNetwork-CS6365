@@ -1,0 +1,5 @@
+[worker.oci]
+enabled = true
+
+[registry."*"]
+insecure = true

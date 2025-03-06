@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cassandra-schema
+  namespace: social-network
+  labels:
+    app: cassandra-schema
+spec:
+  template:
+    metadata:
+      labels:
+        app: cassandra-schema
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: cassandra-schema
+          image: jaegertracing/jaeger-cassandra-schema
+          args:
+            - /bin/sh
+            - -c
+            - "sleep 10; exec jaegertracing/jaeger-cassandra-schema"

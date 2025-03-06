@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unique-id-service
+  namespace: social-network
+  labels:
+    app: unique-id-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unique-id-service
+  template:
+    metadata:
+      labels:
+        app: unique-id-service
+    spec:
+      containers:
+        - name: unique-id-service
+          image: localhost:5000/social-network-microservices:withLog_01
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          command: ["UniqueIdService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: tls-volume
+              mountPath: /keys
+      volumes:
+        - name: config-volume
+          configMap:
+            name: service-config
+        - name: tls-volume
+          secret:
+            secretName: tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unique-id-service
+  namespace: social-network
+spec:
+  selector:
+    app: unique-id-service
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongod-config
+  namespace: social-network
+data:
+  mongod.conf: |
+    net:
+      bindIp: 0.0.0.0
+      tls:
+        mode: disabled

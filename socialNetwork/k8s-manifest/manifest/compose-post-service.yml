@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compose-post-service
+  namespace: social-network
+  labels:
+    app: compose-post-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: compose-post-service
+  template:
+    metadata:
+      labels:
+        app: compose-post-service
+    spec:
+      containers:
+        - name: compose-post-service
+          image: localhost:5000/social-network-microservices:withLog_01
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          command: ["ComposePostService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: tls-volume
+              mountPath: /keys
+      volumes:
+        - name: config-volume
+          configMap:
+            name: service-config
+        - name: tls-volume
+          secret:
+            secretName: tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compose-post-service
+  namespace: social-network
+spec:
+  selector:
+    app: compose-post-service
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-timeline-service
+  namespace: social-network
+  labels:
+    app: user-timeline-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-timeline-service
+  template:
+    metadata:
+      labels:
+        app: user-timeline-service
+    spec:
+      containers:
+        - name: user-timeline-service
+          image: localhost:5000/social-network-microservices:withLog_01
+          command: ["UserTimelineService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: tls-volume
+              mountPath: /keys
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: service-config
+        - name: tls-volume
+          secret:
+            secretName: tls
+        - name: mongod-volume
+          configMap:
+            name: mongod-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-timeline-service
+  namespace: social-network
+spec:
+  selector:
+    app: user-timeline-service
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

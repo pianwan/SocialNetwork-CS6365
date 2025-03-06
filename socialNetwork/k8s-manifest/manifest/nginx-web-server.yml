@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-web-server
+  namespace: social-network
+  labels:
+    app: nginx-web-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-web-server
+  template:
+    metadata:
+      labels:
+        app: nginx-web-server
+    spec:
+      containers:
+        - name: nginx-web-server
+          image: localhost:5000/nginx-web-server:v1
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: tls-volume
+              mountPath: /keys
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      volumes:
+        - name: tls-volume
+          secret:
+            secretName: tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-web-server
+  namespace: social-network
+spec:
+  selector:
+    app: nginx-web-server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: NodePort

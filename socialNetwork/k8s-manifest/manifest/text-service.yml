@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-service
+  namespace: social-network
+  labels:
+    app: text-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: text-service
+  template:
+    metadata:
+      labels:
+        app: text-service
+    spec:
+      containers:
+        - name: text-service
+          image: localhost:5000/social-network-microservices:withLog_01
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          command: ["TextService"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+            - name: tls-volume
+              mountPath: /keys
+      volumes:
+        - name: config-volume
+          configMap:
+            name: service-config
+        - name: tls-volume
+          secret:
+            secretName: tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-service
+  namespace: social-network
+spec:
+  selector:
+    app: text-service
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

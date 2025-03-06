@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: jaeger-agent
+  namespace: social-network
+  labels:
+    app: jaeger-agent
+spec:
+  selector:
+    matchLabels:
+      app: jaeger-agent
+  template:
+    metadata:
+      labels:
+        app: jaeger-agent
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+
+      containers:
+        - name: jaeger-agent
+          image: jaegertracing/jaeger-agent:latest
+          args: ["--reporter.grpc.host-port=jaeger-collector:14250"]
+          ports:
+            - containerPort: 6831
+              protocol: UDP
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-agent
+  namespace: social-network
+spec:
+  selector:
+    app: jaeger-agent
+  ports:
+    - name: udp-6831
+      protocol: UDP
+      port: 6831
+      targetPort: 6831
+  type: ClusterIP

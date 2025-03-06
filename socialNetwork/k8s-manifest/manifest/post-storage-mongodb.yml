@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-storage-mongodb
+  namespace: social-network
+  labels:
+    app: post-storage-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: post-storage-mongodb
+  template:
+    metadata:
+      labels:
+        app: post-storage-mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:4.4.6
+          command:
+            - "mongod"
+            - "--nojournal"
+            - "--quiet"
+            - "--config"
+            - "/etc/mongoconf/mongod.conf"
+          volumeMounts:
+            - mountPath: /etc/mongoconf
+              name: mongod-volume
+          ports:
+            - containerPort: 27017
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+      volumes:
+        - name: mongod-volume
+          configMap:
+            name: mongod-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: post-storage-mongodb
+  namespace: social-network
+spec:
+  selector:
+    app: post-storage-mongodb
+  ports:
+    - name: mongodb
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-mongodb
+  namespace: social-network
+  labels:
+    app: media-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: media-mongodb
+  template:
+    metadata:
+      labels:
+        app: media-mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:4.4.6
+          command:
+            - "mongod"
+            - "--nojournal"
+            - "--quiet"
+            - "--config"
+            - "/etc/mongoconf/mongod.conf"
+          volumeMounts:
+            - mountPath: /etc/mongoconf
+              name: mongod-config-volume
+          ports:
+            - containerPort: 27017
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1"
+      volumes:
+        - name: mongod-config-volume
+          configMap:
+            name: mongod-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-mongodb
+  namespace: social-network
+spec:
+  selector:
+    app: media-mongodb
+  ports:
+    - name: mongodb
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP

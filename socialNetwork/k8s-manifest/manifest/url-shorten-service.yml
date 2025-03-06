@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-shorten-service
+  namespace: social-network
+  labels:
+    app: url-shorten-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: url-shorten-service
+  template:
+    metadata:
+      labels:
+        app: url-shorten-service
+    spec:
+      containers:
+        - name: url-shorten-service
+          image: localhost:5000/social-network-microservices:withLog_01
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          command: ["UrlShortenService"]
+          volumeMounts:
+            - mountPath: /keys
+              name: tls-volume
+            - name: config-volume
+              mountPath: /social-network-microservices/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: service-config
+        - name: tls-volume
+          secret:
+            secretName: tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-shorten-service
+  namespace: social-network
+spec:
+  selector:
+    app: url-shorten-service
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

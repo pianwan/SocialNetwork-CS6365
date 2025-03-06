@@ -21,7 +21,7 @@ case "$response" in
     exit
     ;;
 esac
-python config/config.py
+python3 config/config.py
 
 if [ ! -e "socialNetworkLSU.zip" ]
 then
@@ -57,6 +57,9 @@ while [[ $# > 1 ]]; do
     --private_ssh_key_path )
       private_ssh_key_path=$2
       ;;
+    --private_github_key_path )
+      private_github_key_path=$2
+      ;;
     --controller_node )
       controller_node=$2
       ;;
@@ -79,9 +82,10 @@ done
 
 # Copy the SSH private key to the controller node.
 scp -o StrictHostKeyChecking=no -i ${private_ssh_key_path} ${private_ssh_key_path} ${username}@${controller_node}:.ssh/id_rsa
+scp -o StrictHostKeyChecking=no -i ${private_ssh_key_path} ${private_github_key_path} ${username}@${controller_node}:.ssh/id_rsa_github
 scp -o StrictHostKeyChecking=no -i ${private_ssh_key_path} -r socialNetworkLSU.zip ${username}@${controller_node}:socialNetworkLSU
 
-# clone env_setup repo in controller node
+# setup env
 ssh -o StrictHostKeyChecking=no -i ${private_ssh_key_path} ${username}@${controller_node} "
   ssh-keygen -F github.com || ssh-keyscan github.com >> ~/.ssh/known_hosts
   echo -e 'Host *\n\tStrictHostKeyChecking no\nHost benchmark\n\tHostName 10.10.1.7\n\tUser ${username}' >> ~/.ssh/config
@@ -89,13 +93,19 @@ ssh -o StrictHostKeyChecking=no -i ${private_ssh_key_path} ${username}@${control
   git config --global user.email ${git_email}
   git config --global user.name ${username}
   git config --global core.editor "vim"
-  git clone git@github.com:WindowsXp-Beta/SocialNetwork.git SetupScripts
+  git clone https://github.com/pianwan/SocialNetwork-CS6365 SetupScripts
   unzip socialNetworkLSU
   sudo apt-get update
   sudo apt-get install -y python3-pip maven pdfgrep
   cd SetupScripts
   pip3 install -r requirements.txt
-  python setup_docker_swarm.py -a 10.10.1.1 -n ${swarm_node_number} -cn ${client_node_number}
+  bash k8s_setup_master.sh $((swarm_node_number - 1))
+  bash build_images.sh $((swarm_node_number - 1))
+  kubectl apply -f socialNetwork/k8s-manifest
+  kubectl apply -f socialNetwork/k8s-manifest/config
+  kubectl apply -f socialNetwork/k8s-manifest/secret
+  kubectl apply -f socialNetwork/k8s-manifest/manifest
+  bash setup_client.sh
   cd ~/DeathStarBench/socialNetwork
   source set_elba_env.sh
   ./scripts/CONTROL_exec.sh

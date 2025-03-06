@@ -1,5 +1,7 @@
 # Cloudlab Setup Guide
 
+Kubernetes version of https://github.com/WindowsXp-Beta/SocialNetwork
+
 ## Instantiating an experiment
 1. Check resource availability for a Bare Metal machine with 12 free resources, example: rs620, r350.
 2. Edit code in `profile.py`.
@@ -175,8 +177,3 @@ Skype: live:x.gu3 (xgu5@outlook.com)
 ## Issues
 1. We currently do not have a reliable way to determine the constraints in `docker-compose-swarm-yml.template`, specifically whether it should be `infosphere` or `infosphere-pg0` as it seems to be determined based on what host you use. To figure out the correct hostname for your experiment, `ssh` into one of the nodes and type `hostname`.
 2. The upstream repository, [DeathStarBench](https://github.com/delimitrou/DeathStarBench), had changes that broke the experiment resulting in certain logs (specifically `post-storage-service.log`). Therefore we implemented a temporary fix in `setup_docker_swarm.py` where we checkout to the last commit before the issue, `b2b7af9`. This is a temporary fix and should be removed once the upstream gets fixed or we changed the rubbos code affected by the upstream changes.
-
-## TODO
-
-- replace bind mount into volumes or docker config
-- **migrate to k8s**

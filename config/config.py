@@ -20,7 +20,6 @@ def main():
     config_file = "config/config.json"
     template_files = [
         "socialNetwork/runtime_files/rubbos.properties.template",
-        "socialNetwork/docker-compose-swarm.yml.template",
     ]
     for template_file in template_files:
         output_file = template_file.rsplit(".template", 1)[0]
